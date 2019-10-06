@@ -49,6 +49,8 @@ void loop() {
   unsigned long AktuelleZeit=0;
   int AnFurWasser = 0;
   int AnFurHeizung = 0;
+  int AnFurWasserSek = 0;
+  int AnFurHeizungSek = 0;  
   AktuelleZeit = millis();
   // Creo una connessione al client
   EthernetClient client = server.available();
@@ -69,10 +71,12 @@ void loop() {
            Serial.println(readString); //scrivi sul monitor seriale per debugging
 
            if(WasserAn){
-            AnFurWasser = (ZeitWasser-AktuelleZeit)/1000;
+            AnFurWasser = (ZeitWasser-AktuelleZeit)/60000;
+            AnFurWasserSek = ((ZeitWasser-AktuelleZeit)-(AnFurWasser * 60000))/1000;
            }
            if(HeizungAn){
-            AnFurHeizung = (ZeitHeizung-AktuelleZeit)/1000;
+            AnFurHeizung = (ZeitHeizung-AktuelleZeit)/60000;
+            AnFurHeizungSek = ((ZeitHeizung-AktuelleZeit)-(AnFurHeizung * 60000))/1000;
            }
            client.println("HTTP/1.1 200 OK"); //Invio nuova pagina
            client.println("Content-Type: text/html");
@@ -95,6 +99,8 @@ void loop() {
            if(WasserAn){
             client.print("<p>Wasser noch an fur ");
             client.print(AnFurWasser);
+            client.print(" Minuten, ");
+            client.print(AnFurWasserSek);
             client.print(" Sekunden.");
             client.print("</p>");
             }
@@ -105,19 +111,15 @@ void loop() {
            if(HeizungAn){
             client.print("<p>Heizung noch an fur ");
             client.print(AnFurHeizung);
+            client.print(" Minuten, ");
+            client.print(AnFurHeizungSek);
             client.print(" Sekunden.");
             client.print("</p>");
             }
            else{client.println("<br />"); client.println("<br />"); client.println("<br />");}
-           client.println("<a href=\"/?button3on\"\">Accendi LED 3</a>");          //Modifica a tuo piacimento:"Accendi LED 3"
-           client.println("<a href=\"/?button3off\"\">Spegni LED 3</a><br />");    //Modifica a tuo piacimento:"Spegni LED 3"
-           client.println("<br />");   
-           client.println("<br />");
-           client.println("<a href=\"/?button4on\"\">Accendi LED 4</a>");          //Modifica a tuo piacimento:"Accendi LED 4"
-           client.println("<a href=\"/?button4off\"\">Spegni LED 4</a><br />");    //Modifica a tuo piacimento:"Spegni LED 4"
            client.println("<br />");
            client.println("<a href=\"/\"\">F5</a>");      
-           client.println("<p>Creato da Salvatore Fancello. Visita http://progettiarduino.com per altri progetti!</p>");  
+           //client.println("<p>Creato da Salvatore Fancello. Visita http://progettiarduino.com per altri progetti!</p>");  
                                             //Sostieni il blog visita: http://www.progettiarduino.com/sostieni-il-blog.html
            client.println("<br />"); 
            client.println("</BODY>");
@@ -127,13 +129,13 @@ void loop() {
            client.stop();
            //Controlli su Arduino: Se è stato premuto il pulsante sul webserver
            if (readString.indexOf("?button1on") >0){
-               ZeitWasser = AktuelleZeit+60000;
+               ZeitWasser = AktuelleZeit+900000;
            }
            if (readString.indexOf("?button1off") >0){
                ZeitWasser = AktuelleZeit;
            }
            if (readString.indexOf("?button2on") >0){
-               ZeitHeizung = AktuelleZeit+60000;
+               ZeitHeizung = AktuelleZeit+900000;
            }
            if (readString.indexOf("?button2off") >0){
                ZeitHeizung = AktuelleZeit;
