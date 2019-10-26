@@ -19,7 +19,7 @@ byte ip[] = { 192, 168, 0, 71 };                      // configurate il vostro I
 byte gateway[] = { 192, 168, 0, 253 };                   // internet access router
 byte subnet[] = { 255, 255, 255, 0 };                  //subnet mask
 EthernetServer server(80);                             //server port     
-String readString;
+
 
 void setup() {
  // Apro la comunicazione seriale:
@@ -46,6 +46,7 @@ void setup() {
 
 
 void loop() {
+  String readString;
   unsigned long AktuelleZeit=0;
   int AnFurWasser = 0;
   int AnFurHeizung = 0;
