@@ -4,29 +4,32 @@ Webserver zum Steuern einer Zentralheizung mit Wasserkreislauf
 
 #include <SPI.h>
 #include <Ethernet.h>
-int led1 = 2;          //relay1
-int led2 = 3;          //relay2
-int led3 = 4;          //relay3
-int led4 = 5;          //relay4
+#include <MemoryFree.h>
+const int led1 = 2;          //relay1
+const int led2 = 3;          //relay2
+const int led3 = 4;          //relay3
+const int led4 = 5;          //relay4
+
+void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 unsigned long ZeitWasser=0;  //some global variables available anywhere in the program
 unsigned long ZeitHeizung=0;
 bool WasserAn = false;
 bool HeizungAn = false;
 
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };   // mac address
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEA };   // mac address
 byte ip[] = { 192, 168, 0, 71 };                      // configurate il vostro IP a vostra scelta("192.168.1.89")
 byte gateway[] = { 192, 168, 0, 253 };                   // internet access router
 byte subnet[] = { 255, 255, 255, 0 };                  //subnet mask
 EthernetServer server(80);                             //server port     
-
+//String readString;
 
 void setup() {
  // Apro la comunicazione seriale:
-  Serial.begin(9600);
-   while (!Serial) {
+  //Serial.begin(9600);
+   //while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
-  }
+ // }
   //Imposto i pin come OUTPUT
   pinMode(led1, OUTPUT);
   digitalWrite(led1, HIGH);
@@ -40,8 +43,8 @@ void setup() {
   // Inizio la comunicazione Ethernet con il server:
   Ethernet.begin(mac, ip, gateway, subnet);
   server.begin();
-  Serial.print("server is at ");
-  Serial.println(Ethernet.localIP());
+ // Serial.print("server is at ");
+ // Serial.println(Ethernet.localIP());
 }
 
 
@@ -93,8 +96,6 @@ void loop() {
            client.println("<H1>Regelung von Heizung & Warmwasser</H1>");
            client.println("<hr />");
            client.println("<br />");  
-           client.println("<H2>Arduino UNO con Ethernet Shield</H2>");
-           client.println("<br />");  
            client.println("<a href=\"/?button1on\"\">Wasser einschalten</a>");          //Modifica a tuo piacimento:"Accendi LED 1"
            client.println("<a href=\"/?button1off\"\">Wasser ausschalten</a><br />");    //Modifica a tuo piacimento:"Spegni LED 1" 
            if(WasserAn){
@@ -118,11 +119,24 @@ void loop() {
             client.print("</p>");
             }
            else{client.println("<br />"); client.println("<br />"); client.println("<br />");}
+           //client.println("<a href=\"/?button3on\"\">Accendi LED 3</a>");          //Modifica a tuo piacimento:"Accendi LED 3"
+           //client.println("<a href=\"/?button3off\"\">Spegni LED 3</a><br />");    //Modifica a tuo piacimento:"Spegni LED 3"
+           //client.println("<br />");   
+           //client.println("<br />");
+           //client.println("<a href=\"/?button4on\"\">Accendi LED 4</a>");          //Modifica a tuo piacimento:"Accendi LED 4"
+           //client.println("<a href=\"/?button4off\"\">Spegni LED 4</a><br />");    //Modifica a tuo piacimento:"Spegni LED 4"
            client.println("<br />");
            client.println("<a href=\"/\"\">F5</a>");      
            //client.println("<p>Creato da Salvatore Fancello. Visita http://progettiarduino.com per altri progetti!</p>");  
                                             //Sostieni il blog visita: http://www.progettiarduino.com/sostieni-il-blog.html
            client.println("<br />"); 
+           client.println("<br />"); 
+           client.println("<br />"); 
+           client.println("Freier Speicher:"); 
+           client.println(freeMemory());
+           client.println("<br />"); 
+           client.println("An seit:");  
+           client.println(AktuelleZeit/1000);
            client.println("</BODY>");
            client.println("</HTML>");
      
@@ -186,5 +200,8 @@ if (ZeitHeizung <= AktuelleZeit){
   digitalWrite(led2, HIGH);//Relai ist LOW-Active
   HeizungAn = false;
   }
+if ((AktuelleZeit > 600000)&&(!WasserAn)&&(!HeizungAn)){
+    resetFunc();  //call reset
+}
 
 }

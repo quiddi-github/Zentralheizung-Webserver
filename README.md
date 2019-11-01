@@ -1,6 +1,10 @@
 # Zentralheizung-Webserver
 
-Stand: 6.10.2019
+Stand: 1.11.2019
+
+1.11.2019
+FreeMemory Library hinzugefügt, um sie laden zu können muss es z.B. in Linux für den root-User in /root/Arduino/libraries kopiert werden. Dies kann man in Datei/Voreinstellungen/ Sketchbook-Speicherort nachgeschaut werden.\
+Der Server wird nun alle 10 Minuten neu gestartet und der freie Ram im Browser angezeigt.\
 
 6.10.2019
 Ein- und Ausschaltezeiten auf 15 Minuten geändert.
