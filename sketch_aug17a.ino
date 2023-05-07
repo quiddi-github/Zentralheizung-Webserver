@@ -14,8 +14,10 @@ void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 unsigned long ZeitWasser=0;  //some global variables available anywhere in the program
 unsigned long ZeitHeizung=0;
+unsigned long ZeitPumpe=0;
 bool WasserAn = false;
 bool HeizungAn = false;
+bool PumpeAn = false;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEA };   // mac address
 byte ip[] = { 192, 168, 0, 71 };                      // configurate il vostro IP a vostra scelta("192.168.1.89")
@@ -36,6 +38,7 @@ void setup() {
   pinMode(led2, OUTPUT);
   digitalWrite(led2, HIGH);
   pinMode(led3, OUTPUT);
+  digitalWrite(led3, HIGH);
   pinMode(led4, OUTPUT);
 
   
@@ -53,8 +56,10 @@ void loop() {
   unsigned long AktuelleZeit=0;
   int AnFurWasser = 0;
   int AnFurHeizung = 0;
+  int AnFurPumpe = 0;
   int AnFurWasserSek = 0;
-  int AnFurHeizungSek = 0;  
+  int AnFurHeizungSek = 0;
+  int AnFurPumpeSek = 0;    
   AktuelleZeit = millis();
   // Creo una connessione al client
   EthernetClient client = server.available();
@@ -82,6 +87,10 @@ void loop() {
             AnFurHeizung = (ZeitHeizung-AktuelleZeit)/60000;
             AnFurHeizungSek = ((ZeitHeizung-AktuelleZeit)-(AnFurHeizung * 60000))/1000;
            }
+           if(PumpeAn){
+            AnFurWasser = (ZeitWasser-AktuelleZeit)/60000;
+            AnFurWasserSek = ((ZeitWasser-AktuelleZeit)-(AnFurWasser * 60000))/1000;
+           }
            client.println("HTTP/1.1 200 OK"); //Invio nuova pagina
            client.println("Content-Type: text/html");
            client.println();     
@@ -96,6 +105,7 @@ void loop() {
            client.println("<H1>Regelung von Heizung & Warmwasser</H1>");
            client.println("<hr />");
            client.println("<br />");  
+           // Anfang: Knöpfe auf Webserver für Wasser
            client.println("<a href=\"/?button1on\"\">Wasser einschalten</a>");          //Modifica a tuo piacimento:"Accendi LED 1"
            client.println("<a href=\"/?button1off\"\">Wasser ausschalten</a><br />");    //Modifica a tuo piacimento:"Spegni LED 1" 
            if(WasserAn){
@@ -108,6 +118,9 @@ void loop() {
             }
            else{client.println("<br />"); client.println("<br />"); client.println("<br />");}
            client.println("<br />");
+           // Ende: Knöpfe auf Webserver für Wasser
+
+           // Anfang: Knöpfe auf Webserver für Heizung
            client.println("<a href=\"/?button2on\"\">Heizung einschalten</a>");          //Modifica a tuo piacimento:"Accendi LED 2"
            client.println("<a href=\"/?button2off\"\">Heizung ausschalten</a><br />");    //Modifica a tuo piacimento:"Spegni LED 2"
            if(HeizungAn){
@@ -119,6 +132,22 @@ void loop() {
             client.print("</p>");
             }
            else{client.println("<br />"); client.println("<br />"); client.println("<br />");}
+           client.println("<br />");
+            // Ende: Knöpfe auf Webserver für Heizung
+
+            // Anfang: Knöpfe auf Webserver für Pumpe
+           client.println("<a href=\"/?button3on\"\">Pumpe einschalten</a>");          //Modifica a tuo piacimento:"Accendi LED 3"
+           client.println("<a href=\"/?button3off\"\">Pumpe ausschalten</a><br />");    //Modifica a tuo piacimento:"Spegni LED 3"
+           if(PumpeAn){
+            client.print("<p>Pumpe noch an fur ");
+            client.print(AnFurPumpe);
+            client.print(" Minuten, ");
+            client.print(AnFurPumpeSek);
+            client.print(" Sekunden.");
+            client.print("</p>");
+            }
+           else{client.println("<br />"); client.println("<br />"); client.println("<br />");}
+           // Ende: Knöpfe auf Webserver für Pumpe
            //client.println("<a href=\"/?button3on\"\">Accendi LED 3</a>");          //Modifica a tuo piacimento:"Accendi LED 3"
            //client.println("<a href=\"/?button3off\"\">Spegni LED 3</a><br />");    //Modifica a tuo piacimento:"Spegni LED 3"
            //client.println("<br />");   
@@ -156,10 +185,10 @@ void loop() {
                ZeitHeizung = AktuelleZeit;
            }
            if (readString.indexOf("?button3on") >0){
-               digitalWrite(led3, HIGH);  
+               ZeitPumpe = AktuelleZeit+300000;
            }
            if (readString.indexOf("?button3off") >0){
-               digitalWrite(led3, LOW);
+               ZeitPumpe = AktuelleZeit;
            }
            if (readString.indexOf("?button4on") >0){
                digitalWrite(led4, HIGH);  
@@ -185,6 +214,14 @@ void loop() {
               digitalWrite(led2, HIGH);//Relai ist LOW-Active
               HeizungAn = false;
            }
+           if (ZeitPumpe > AktuelleZeit){
+              digitalWrite(led3, LOW);//Relai ist LOW-Active
+              PumpeAn = true;
+           }
+           else{
+              digitalWrite(led3, HIGH);//Relai ist LOW-Active
+              PumpeAn = false;
+           }
             //Cancella la stringa una volta letta
             readString="";  
            
@@ -200,7 +237,11 @@ if (ZeitHeizung <= AktuelleZeit){
   digitalWrite(led2, HIGH);//Relai ist LOW-Active
   HeizungAn = false;
   }
-if ((AktuelleZeit > 600000)&&(!WasserAn)&&(!HeizungAn)){
+if (ZeitPumpe <= AktuelleZeit){
+  digitalWrite(led3, HIGH);//Relai ist LOW-Active
+  PumpeAn = false;
+  }
+if ((AktuelleZeit > 600000)&&(!WasserAn)&&(!HeizungAn)&&(!PumpeAn)){
     resetFunc();  //call reset
 }
 
